@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat en Línea</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e0f7fa;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        #messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-bottom: 1px solid #ccc;
+        }
+
+        #messages p {
+            background-color: #e3f2fd;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 10px;
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+
+        #messages p.own {
+            background-color: #bbdefb;
+            align-self: flex-end;
+        }
+
+        #messageForm {
+            display: flex;
+            padding: 10px;
+            background-color: #0288d1;
+            border-top: 1px solid #ccc;
+        }
+
+        #messageForm input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+
+        #messageForm button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            background-color: #ffeb3b;
+            color: #212121;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #messageForm button:hover {
+            background-color: #fdd835;
+        }
+
+        @media (max-width: 600px) {
+
+            #messageForm input,
+            #messageForm button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="messages"></div>
+    <form id="messageForm">
+        <input type="text" id="message" placeholder="Escribe un mensaje..." required>
+        <button type="submit">Enviar</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const ws = new WebSocket('ws://localhost:8080');
+
+            ws.addEventListener('open', () => {
+                console.log('Conectado al servidor de chat');
+            });
+
+            ws.addEventListener('message', (event) => {
+                const mensaje = JSON.parse(event.data);
+                const mensajesDiv = document.getElementById('messages');
+                const nuevoMensaje = document.createElement('p');
+                nuevoMensaje.innerHTML = `<strong>${mensaje.from}:</strong> ${mensaje.message}`;
+                mensajesDiv.appendChild(nuevoMensaje);
+                mensajesDiv.scrollTop = mensajesDiv.scrollHeight;
+            });
+
+            const form = document.getElementById('messageForm');
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                const mensajeInput = document.getElementById('message');
+                const mensaje = { type: 'message', message: mensajeInput.value };
+                ws.send(JSON.stringify(mensaje));
+
+                const mensajesDiv = document.getElementById('messages');
+                const nuevoMensaje = document.createElement('p');
+                nuevoMensaje.classList.add('own');
+                nuevoMensaje.innerHTML = `<strong>Yo:</strong> ${mensajeInput.value}`;
+                mensajesDiv.appendChild(nuevoMensaje);
+                mensajesDiv.scrollTop = mensajesDiv.scrollHeight;
+
+                mensajeInput.value = '';
+            });
+        });
+    </script>
+</body>
+
+</html>
